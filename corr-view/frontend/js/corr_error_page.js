@@ -11,8 +11,17 @@ var error_messages = {"415" : "It seems that the media type sent is not supporte
                       "511" : "It seems that you have issue with your network authentication.",
                       "401" : "It seems that you do not have access to this."}
 
-var title = "CoRR - Error error_id".replace("error_id", corr_error_id)
-handlebars_loader_prepend("../templates/head.handlebars", {"title" : title}, "head");
+handlebars_register_partial("../templates/head_extra.handlebars",
+                            "head_extra");
+handlebars_register_partial("../templates/loader_wrapper.handlebars",
+                            "loader_wrapper");
+var title = "CoRR - Error error_id".replace("error_id", corr_error_id);
+
+handlebars_loader_prepend("../templates/head.handlebars",
+                          {"title" : title,
+                           "base_url" : "../"},
+                          "head");
+
 var data = {"error_id" : corr_error_id, "error_message" : error_messages[corr_error_id]};
 handlebars_loader_prepend("../templates/error_body.handlebars", data, "body");
 
