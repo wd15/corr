@@ -15,7 +15,6 @@ dependencies:
     - flask-testing
     - click
     - twill
-    - lxml
     - flask-api
     - flask-stormpath
     - hurry.filesize

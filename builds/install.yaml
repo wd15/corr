@@ -10,8 +10,11 @@
     python: "{{ anaconda_path }}/envs/{{ corr_env }}/bin/python"
   tasks:
 
-    - include: clone.yaml
+    - include: corr_path.yaml
       tags: [always]
+
+    - include: clone.yaml
+      tags: [install]
 
     - include: mongo.yaml
       tags: [install]
