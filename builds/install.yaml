@@ -57,6 +57,15 @@
         inventory_hostname in groups['api'] or
         inventory_hostname in groups['cloud']
 
+    - name: create ~/s3 directory
+      file: path={{ local_path }}/aws state=directory
+
+    - name: copy s3 config
+      template: src={{ inventory_dir }}/config-s3.j2 dest={{ local_path}}/aws/config
+
+    - name: copy s3 credentials
+      template: src={{ inventory_dir }}/credentials-s3.j2 dest={{ local_path}}/aws/credentials
+
     - name: copy frontend config file
       tags: [install]
       when: inventory_hostname in groups['frontend']

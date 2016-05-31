@@ -1,13 +1,4 @@
 ## Deploy a production environment using Nginx
-- name: create ~/s3 directory
-  file: path={{ local_path }}/aws state=directory
-
-- name: copy s3 config
-  template: src={{ inventory_dir }}/config-s3.j3 dest={{ local_path}}/aws/config
-
-- name: copy s3 credentials
-  template: src={{ inventory_dir }}/credentials-s3.j3 dest={{ local_path}}/aws/credentials
-
 
 - name: create ~/.config directory
   file: path={{ local_path }}/.config state=directory
