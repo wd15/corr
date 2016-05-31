@@ -13,6 +13,15 @@
 - set_fact:
     init_system: "{{ dpkg_stdout.stdout[0:7] }}"
 
+- name: create ~/s3 directory
+  file: path={{ local_path }}/aws state=directory
+
+- name: copy s3 config
+  template: src={{ inventory_dir }}/config-s3.j2 dest={{ local_path}}/aws/config
+
+- name: copy s3 credentials
+  template: src={{ inventory_dir }}/credentials-s3.j2 dest={{ local_path}}/aws/credentials
+
 - name: copy service template for systemd
   template: src={{ inventory_dir }}/app.service.j2 dest=/lib/systemd/system/{{ app_service_name }}.service
   when: init_system == "systemd"
