@@ -18,6 +18,8 @@ API_SETTINGS = {
     'port': {{hostvars['apihost']['mapped_port']}}
 }
 
+S3_BUCKET = {{s3_bucket}}
+
 STORMPATH_API_KEY_FILE = 'apiKey.properties'
 STORMPATH_APPLICATION = '{{ stormpath_app }}'
 STORMPATH_REDIRECT_URL = '/cloud'

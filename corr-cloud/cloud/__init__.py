@@ -26,6 +26,8 @@ app = setup_app(__name__)
 
 s3 =  boto3.resource('s3')
 
+S3_BUCKET = app.config['S3_BUCKET']
+
 # Stormpath
 
 from flask.ext.stormpath import StormpathManager
@@ -661,6 +663,7 @@ VIEW_PORT = app.config['VIEW_SETTINGS']['port']
 
 API_HOST = app.config['VIEW_SETTINGS']['host']
 API_PORT = app.config['VIEW_SETTINGS']['port']
+
 
 from . import views
 from corrdb.common import models

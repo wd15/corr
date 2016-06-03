@@ -200,12 +200,12 @@ class CoRRTask:
 @click.option('--api', default=None, help="api client")
 @click.option('--elnk', default=None, help="execution linker")
 
-def handle(name, tag, delay, aid, origin, elnk):
+def handle(name, tag, delay, aid, origin, api, clnk, elnk):
     delay_value = 10
     aid_value = None
     origin_value = None
-    # # print "Name: {0}".format(name)
-    # # print "tag: {0}".format(tag)
+    # print "Name: {0}".format(name)
+    # print "tag: {0}".format(tag)
 
     stamp = str(datetime.datetime.now())
 
@@ -219,12 +219,15 @@ def handle(name, tag, delay, aid, origin, elnk):
         task = CoRRTask(name=name, tag=tag, clnk_module=clnk_module, api_module=api_module, elnk_module=elnk_module)
         # task.run()
         try:
-            # # print "Loading watcher: {0}".format(task.tag)
+            print "Loading watcher: {0}".format(task.tag)
             with daemon.DaemonContext():
                 task.run()
         except:
+            print traceback.print_exc(file=sys.stdout)
             pass
+    else:
+        print "Nop"
 
 
-if __name__ == '__corr.main__':
+if __name__ == '__main__':
     handle()

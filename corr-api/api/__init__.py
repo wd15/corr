@@ -30,6 +30,8 @@ app = setup_app(__name__)
 
 s3 =  boto3.resource('s3')
 
+S3_BUCKET = app.config['S3_BUCKET']
+
 def check_api(token):
     for user in UserModel.objects():
         print "%s -- %s." %(user.email, user.api_token)
@@ -609,6 +611,7 @@ def web_get_file(url):
 
 API_VERSION = 0.1
 API_URL = '/api/v{0}'.format(API_VERSION)
+
 
 def logTraffic(endpoint=''):
     # created_at=datetime.datetime.utcnow()
