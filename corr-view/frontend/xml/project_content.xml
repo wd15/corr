@@ -1,9 +1,9 @@
 <div class='col s12 m6 l4'>
     <div id='profile-card' class='card'>
-        <div class='card-image waves-effect waves-block waves-light'><img class='activator' src='../images/user-bg.jpg' alt='user background'>
+        <div class='card-image waves-effect waves-block waves-light'><img class='activator' src='../images/user-bg.jpg' alt='user background'></img>
         </div>
         <div class='card-content'>
-            <img src='../images/project.png' alt='' class='circle responsive-img activator card-profile-image'>
+            <img src='../images/project.png' alt='' class='circle responsive-img activator card-profile-image'></img>
             <a onclick='projectRemove("project_name","project_id");' class='btn-floating activator btn-move-up waves-effect waves-light darken-2 right'><i class='mdi-action-delete'></i></a>
             <a onclick='uploadRecord("project_name","project_id");' class='btn-floating activator btn-move-up waves-effect waves-light darken-2 right'><i class='mdi-file-cloud-upload'></i></a>
             <a onclick='nextEnvironment("project_name","project_id");' class='btn-floating activator btn-move-up waves-effect waves-light darken-2 right'><i class='mdi-maps-layers'></i></a>

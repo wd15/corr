@@ -180,8 +180,8 @@ class CoRRTask:
             else:
                 # print "No info!!!"
                 pass
-            if found and not running:
-                break
+            # if found and not running:
+            #     break
             sleep(self.refresh)
             duration += self.refresh
             if duration >= self.timeout:

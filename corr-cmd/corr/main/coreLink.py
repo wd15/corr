@@ -294,7 +294,10 @@ def tag(name=None, api=None, elnk=None, ctsk=None):
         registrations[investigations[0]]['tags'].append(tag)
         core.ensure_repo(registrations[investigations[0]]['name'])
         core.write_reg('default', registrations)
-        api_module = core.extend_load(api)
+        if api:
+            api_module = core.extend_load(api)
+        else:
+            api_module = core.extend_load('corr.main.api')
         api_response = api_module.project_update(
             config=config,
             project=registrations[investigations[0]]['project'],
