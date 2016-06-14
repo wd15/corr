@@ -19,8 +19,8 @@
 - name: copy s3 config
   template: src={{ inventory_dir }}/config-s3.j2 dest={{ local_path}}/aws/config
 
-- name: copy s3 credentials
-  template: src={{ inventory_dir }}/credentials-s3.j2 dest={{ local_path}}/aws/credentials
+# - name: copy s3 credentials
+#   template: src={{ inventory_dir }}/credentials-s3.j2 dest={{ local_path}}/aws/credentials
 
 - name: copy service template for systemd
   template: src={{ inventory_dir }}/app.service.j2 dest=/lib/systemd/system/{{ app_service_name }}.service
