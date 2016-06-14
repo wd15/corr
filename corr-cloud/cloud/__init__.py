@@ -249,13 +249,13 @@ def s3_get_file(group='', key=''):
     try:
         obj = None
         if key != '':
-            obj = s3.Object(bucket_name='corr-%ss'%group, key=key)
+            obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/{1}'.format(group,key))
         else:
             if group == 'picture' or group == 'logo':
-                obj = s3.Object(bucket_name='corr-%ss'%group, key='default-%s.png'%group)
+                obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/default-{1}.png'.format(group,key))
     except:
         if group == 'picture' or group == 'logo':
-            obj = s3.Object(bucket_name='corr-logos', key='default-%s.png'%group)
+            obj = s3.Object(bucket_name=S3_BUCKET, key='corr-logos/default-{0}.png'.format(group))
 
     try:
         res = obj.get()
@@ -274,8 +274,8 @@ def s3_upload_file(file_meta=None, file_obj=None):
                 if file_meta.group != 'descriptive':
                     group = 'corr-%ss'%file_meta.group
                 print group
-                s3_files = s3.Bucket(group)
-                s3_files.put_object(Key=dest_filename, Body=file_obj.read())
+                s3_files = s3.Bucket(S3_BUCKET)
+                s3_files.put_object(Key='{0}/{1}'.format(group, dest_filename), Body=file_obj.read())
                 return [True, "File uploaded successfully"]
             except:
                 return [False, traceback.format_exc()]
@@ -287,9 +287,9 @@ def s3_upload_file(file_meta=None, file_obj=None):
 def s3_delete_file(group='', key=''):
     deleted = False
     if key not in ["default-logo.png", "default-picture.png"]:
-        s3_files = s3.Bucket('corr-%ss'%group)
+        s3_files = s3.Bucket(S3_BUCKET)
         for _file in s3_files.objects.all():
-            if _file.key == key: 
+            if _file.key == 'corr-{0}s/{1}'.format(group, key): 
                 _file.delete()
                 print "File deleted!"
                 deleted = True
