@@ -217,6 +217,7 @@ def s3_get_file(group='', key=''):
         res = obj.get()
         print res['Body'].read()
         print "logging issue..."
+        print "logging issue..."
         file_buffer.write(res['Body'].read())
         file_buffer.seek(0)
         return file_buffer
