@@ -222,7 +222,7 @@ def s3_get_file(group='', key=''):
             file_buffer.write(res['Body'].read(3000))
         if left > 0:
             file_buffer.write(res['Body'].read(left))
-        file_buffer.seek(0)
+        # file_buffer.seek(0)
         return file_buffer
     except:
         print 'corr-{0}s/{1}'.format(group,key)
