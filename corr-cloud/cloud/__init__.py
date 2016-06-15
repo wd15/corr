@@ -199,6 +199,7 @@ def delete_record_file(record_file):
 
 def s3_get_file(group='', key=''):
     file_buffer = StringIO()
+    print 'corr-{0}s/{1}'.format(group,key)
     try:
         obj = None
         if key != '':
@@ -207,14 +208,13 @@ def s3_get_file(group='', key=''):
             if group == 'picture' or group == 'logo':
                 obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/default-{1}.png'.format(group,key))
     except:
+        print 'corr-{0}s/{1}'.format(group,key)
         print traceback.print_exc()
         if group == 'picture' or group == 'logo':
             obj = s3.Object(bucket_name=S3_BUCKET, key='corr-logos/default-{0}.png'.format(group))
 
     try:
         res = obj.get()
-        print '{0}'.format(res)
-        print '{0}'.format(res['Body'])
         file_buffer.write(res['Body'].read())
         file_buffer.seek(0)
         return file_buffer
