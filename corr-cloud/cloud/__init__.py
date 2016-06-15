@@ -207,6 +207,7 @@ def s3_get_file(group='', key=''):
             if group == 'picture' or group == 'logo':
                 obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/default-{1}.png'.format(group,key))
     except:
+        print traceback.print_exc()
         if group == 'picture' or group == 'logo':
             obj = s3.Object(bucket_name=S3_BUCKET, key='corr-logos/default-{0}.png'.format(group))
 
@@ -216,6 +217,8 @@ def s3_get_file(group='', key=''):
         file_buffer.seek(0)
         return file_buffer
     except:
+        print 'corr-{0}s/{1}'.format(group,key)
+        print traceback.print_exc()
         return None
 
 def s3_upload_file(file_meta=None, file_obj=None):

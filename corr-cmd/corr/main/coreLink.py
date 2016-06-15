@@ -52,12 +52,13 @@ def handle(config, conx, name, host, port, key, tag,
     if config:
         print configure(host=host, port=port, key=key)
 
+    if api:
+      api_path = extensions['api'][alias]['path']
+    else:
+      api_path = 'corr.main.api'
+
     if conx:
         config = core.read_config('default')
-        if api:
-          api_path = extensions['api'][alias]['path']
-        else:
-          api_path = 'corr.main.api'
         api_module = core.extend_load(api_path)
         if api_module.api_status(config=config):
             ## print "OK --- CoRR backend api[{0}:{1}] reached.".format(
@@ -69,7 +70,7 @@ def handle(config, conx, name, host, port, key, tag,
             print "KO"
 
     if upload and file:
-        push_file(path=path, obj=obj, group=group)
+        push_file(api=api_path, path=path, obj=obj, group=group)
 
     if upload and env:
         push_env(name=name, tag=tag, path=path)
@@ -512,16 +513,18 @@ def unwatch(name=None, tag=None, api=None, elnk=None, ctsk=None):
         return [False, None]
 
 # Change the way you upload a file.
-def push_file(path=None, obj=None, group=None):
+def push_file(api=None, path=None, obj=None, group=None):
     config = core.read_config()
     api_module = core.extend_load(api)
-    api_response = api_module.upload_file(config=config, path=path, obj=obj, group=group)
+    api_response = api_module.upload_file(config=config['default'], path=path, obj=obj, group=group)
     if api_response[0]:
         ## print "File uploaded."
+        print api_response[1]
         return api_response[1]
     else:
         ## print "File upload failed."
         # # print api_response[1]
+        print api_response[1]
         return api_response[1]
 
 # Change the way you upload an environment.
