@@ -203,20 +203,19 @@ def s3_get_file(group='', key=''):
     try:
         obj = None
         if key != '':
-            s3_files = s3.Bucket(S3_BUCKET)
-            obj = s3.get_object(Bucket=S3_BUCKET, Key='corr-{0}s/{1}'.format(group,key))
+            obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/{1}'.format(group,key))
         else:
             if group == 'picture' or group == 'logo':
-                obj = s3.get_object(Bucket=S3_BUCKET, Key='corr-{0}s/default-{1}.png'.format(group,key))
+                obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/default-{1}.png'.format(group,key))
     except:
         print 'corr-{0}s/{1}'.format(group,key)
         print traceback.print_exc()
         if group == 'picture' or group == 'logo':
-            obj = s3.get_object(Bucket=S3_BUCKET, Key='corr-logos/default-{0}.png'.format(group))
+            obj = s3.Object(bucket_name=S3_BUCKET, key='corr-logos/default-{0}.png'.format(group))
 
     try:
         res = obj.get()
-        print res['Body']
+        print str(res['Body'])
         file_buffer.write(res['Body'].read())
         file_buffer.seek(0)
         return file_buffer
