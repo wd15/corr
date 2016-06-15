@@ -215,7 +215,8 @@ def s3_get_file(group='', key=''):
 
     try:
         res = obj.get()
-        print res
+        print 'printing...'
+        print res['Body']
         file_buffer.write(res['Body'].read())
         file_buffer.seek(0)
         return file_buffer
