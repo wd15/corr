@@ -52,12 +52,13 @@ def handle(config, conx, name, host, port, key, tag,
     if config:
         print configure(host=host, port=port, key=key)
 
+    if api:
+      api_path = extensions['api'][alias]['path']
+    else:
+      api_path = 'corr.main.api'
+
     if conx:
         config = core.read_config('default')
-        if api:
-          api_path = extensions['api'][alias]['path']
-        else:
-          api_path = 'corr.main.api'
         api_module = core.extend_load(api_path)
         if api_module.api_status(config=config):
             ## print "OK --- CoRR backend api[{0}:{1}] reached.".format(
@@ -69,7 +70,7 @@ def handle(config, conx, name, host, port, key, tag,
             print "KO"
 
     if upload and file:
-        push_file(path=path, obj=obj, group=group)
+        push_file(api=api_path, path=path, obj=obj, group=group)
 
     if upload and env:
         push_env(name=name, tag=tag, path=path)
@@ -239,44 +240,45 @@ def register(name=None, api=None, elnk=None, ctsk=None):
             investigation['history'] = []
             investigation['watcher'] = None
             exists = False
-            if not investigation['name'].isalnum():
-                ## print "Registration failed. name has to be alphanumberial."
-                return None
-            else:
-                for reg in registrations:
-                    if reg['name'] == investigation['name']:
-                        exists = True
-                        break
-                if not exists:
-                    registrations.append(investigation)
+            # if not investigation['name'].isalnum() :
+            #     ## print "Registration failed. name has to be alphanumberial."
+            #     ## Error logs are very important we have to provide messages for all cases.
+            #     return None
+            # else:
+            for reg in registrations:
+                if reg['name'] == investigation['name']:
+                    exists = True
+                    break
+            if not exists:
+                registrations.append(investigation)
+                core.ensure_repo(investigation['name'])
+                core.write_reg('default', registrations)
+                ## print "Registration produced tag: {0}".format(investigation['tags'])
+                api_module = core.extend_load(api)
+                api_response = api_module.project_create(
+                    config=config,
+                    name=investigation['name'],
+                    description='no description provided.',
+                    goals='no goals set.',
+                    tags=investigation['tags'])
+                if api_response[0] == True:
+                    investigation['consistency'] = True
+                    investigation['project'] = api_response[1]['id']
                     core.ensure_repo(investigation['name'])
                     core.write_reg('default', registrations)
-                    ## print "Registration produced tag: {0}".format(investigation['tags'])
-                    api_module = core.extend_load(api)
-                    api_response = api_module.project_create(
-                        config=config,
-                        name=investigation['name'],
-                        description='no description provided.',
-                        goals='no goals set.',
-                        tags=investigation['tags'])
-                    if api_response[0] == True:
-                        investigation['consistency'] = True
-                        investigation['project'] = api_response[1]['id']
-                        core.ensure_repo(investigation['name'])
-                        core.write_reg('default', registrations)
-                        ## print "The associated project metadata is now\
-                        #consistent with the registration."
-                        return "Consistent"
-                    else:
-                        ## print "Consistency alignment between registration\
-                        #and project metadat failed. Please check connectivity\
-                        #and try to sync the investigation later."
-                        # print api_response[1]
-                        return investigation
+                    ## print "The associated project metadata is now\
+                    #consistent with the registration."
+                    return "Consistent"
                 else:
-                    ## print "Registration failed. A registration already exists\
-                    #with the name: {0}".format(investigation['name'])
+                    ## print "Consistency alignment between registration\
+                    #and project metadat failed. Please check connectivity\
+                    #and try to sync the investigation later."
+                    # print api_response[1]
                     return investigation
+            else:
+                ## print "Registration failed. A registration already exists\
+                #with the name: {0}".format(investigation['name'])
+                return investigation
 
 # Change the way tag an investigation.
 def tag(name=None, api=None, elnk=None, ctsk=None):
@@ -293,7 +295,10 @@ def tag(name=None, api=None, elnk=None, ctsk=None):
         registrations[investigations[0]]['tags'].append(tag)
         core.ensure_repo(registrations[investigations[0]]['name'])
         core.write_reg('default', registrations)
-        api_module = core.extend_load(api)
+        if api:
+            api_module = core.extend_load(api)
+        else:
+            api_module = core.extend_load('corr.main.api')
         api_response = api_module.project_update(
             config=config,
             project=registrations[investigations[0]]['project'],
@@ -418,6 +423,9 @@ def watcher_launch(name=None, tag=None, api=None, elnk=None, ctsk=None):
     task_cmd.append(elnk)
     task_cmd.append("--api")
     task_cmd.append(api)
+    task_cmd.append("--clnk")
+    task_cmd.append('corr.main.coreLink')
+    print task_cmd
     # call(task_cmd)
     try:
         import subprocess
@@ -454,7 +462,7 @@ def watch(name=None, tag=None, api=None, elnk=None, ctsk=None):
     # # print str(registrations[investigations[0]])
     if len(investigations) > 0 and registrations[investigations[0]]['status']['value'] != 'unregistered':
         if registrations[investigations[0]]['status']['value'] == 'watching':
-            ## print "Already watching this entry."
+            print "Already watching this entry."
             return [True, None]
         else:
             registrations[investigations[0]]['history'].append(registrations[investigations[0]]['status'])
@@ -466,16 +474,16 @@ def watch(name=None, tag=None, api=None, elnk=None, ctsk=None):
                 tag=tag,
                 api=api, elnk=elnk, ctsk=ctsk)
             if task_process:
-                ## print "Watching on task-[{0}]...".format(int(task_process.pid))
+                print "Watching on task-[{0}]...".format(int(task_process.pid))
                 registrations[investigations[0]]['watcher'] = int(task_process.pid) + 4
                 core.write_reg('default', registrations)
-                ## print "Watching the investigation..."
+                print "Watching the investigation..."
                 return [True, task_process]
             else:
-                ## print "Error: Could not start this watcher."
+                print "Error: Could not start this watcher."
                 return [False, None]
     else:
-        ## print "Could not found this investigation to watch."
+        print "Could not found this investigation to watch."
         return [False, None]
 
 # Change the way you unwatch an investigation.
@@ -505,16 +513,18 @@ def unwatch(name=None, tag=None, api=None, elnk=None, ctsk=None):
         return [False, None]
 
 # Change the way you upload a file.
-def push_file(path=None, obj=None, group=None):
+def push_file(api=None, path=None, obj=None, group=None):
     config = core.read_config()
     api_module = core.extend_load(api)
-    api_response = api_module.upload_file(config=config, path=path, obj=obj, group=group)
+    api_response = api_module.upload_file(config=config['default'], path=path, obj=obj, group=group)
     if api_response[0]:
         ## print "File uploaded."
+        print api_response[1]
         return api_response[1]
     else:
         ## print "File upload failed."
         # # print api_response[1]
+        print api_response[1]
         return api_response[1]
 
 # Change the way you upload an environment.

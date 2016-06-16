@@ -30,6 +30,8 @@ app = setup_app(__name__)
 
 s3 =  boto3.resource('s3')
 
+S3_BUCKET = app.config['S3_BUCKET']
+
 def check_api(token):
     for user in UserModel.objects():
         print "%s -- %s." %(user.email, user.api_token)
@@ -50,52 +52,6 @@ def check_admin(token):
     else:
         print user_model.group
         return user_model if user_model.group == "admin" else None
-
-def load_bundle(record):
-    # Include record files later.
-    memory_file = BytesIO()
-    with zipfile.ZipFile(memory_file, 'w') as zf:
-
-        try:
-            bundle_buffer = StringIO()
-            # with open(record.container.image['location'], 'rb') as fh:
-            #     image_buffer.write(fh.read())
-            # res = key.get_contents_to_filename(record.container.image['location'])   
-            # s3_client = boto3.client('s3')
-            # res = s3_client.get_object(Bucket='ddsm-bucket', Key=record.container.image['location']) 
-            obj = s3.Object(bucket_name='reproforge-bundles', key=record.environment.bundle['location'])  
-            res = obj.get()      
-            bundle_buffer.write(res['Body'].read())
-            bundle_buffer.seek(0)
-
-            data = zipfile.ZipInfo("%s"%(record.project.name, record.environment.bundle['location'].split('_')))
-            data.date_time = time.localtime(time.time())[:6]
-            data.compress_type = zipfile.ZIP_DEFLATED
-            data.external_attr |= 0777 << 16L # -rwx-rwx-rwx
-            zf.writestr(data, bundle_buffer.read())
-        except:
-            print traceback.print_exc()
-
-        try:
-            json_buffer = StringIO()
-            json_buffer.write(record.to_json())
-            json_buffer.seek(0)
-
-            data = zipfile.ZipInfo("%s_%s.json"%(record.project.name, str(record.id)))
-            data.date_time = time.localtime(time.time())[:6]
-            data.compress_type = zipfile.ZIP_DEFLATED
-            data.external_attr |= 0777 << 16L # -rwx-rwx-rwx
-            zf.writestr(data, json_buffer.read())
-        except:
-            print traceback.print_exc()
-    memory_file.seek(0)
-
-
-    # imz.append('record.tar', image_buffer.read()).append("record.json", json_buffer.read())
-
-    # print record.container.image['location'].split("/")[-1].split(".")[0]+".zip"
-
-    return [memory_file, record.environment.bundle['location'].split("/")[-1].split(".")[0]+".zip"]
 
 def prepare_env(project=None, env=None):
     if project == None or env == None:
@@ -482,49 +438,63 @@ def crossdomain(origin=None, methods=None, headers=None, max_age=21600, attach_t
         return update_wrapper(wrapped_function, f)
     return decorator
 
-def upload_bundle(current_user, environment, file_obj):
-    dest_filename = str(current_user.id)+"-"+str(environment.id)+"_%s"%file_obj.filename #kind is record| signature
-
-    print "About to write..."
-    try:
-        s3.Bucket('reproforge-bundles').put_object(Key=str(current_user.id)+"-"+str(environment.id)+"_%s"%file_obj.filename, Body=file_obj.read())
-        environment.bundle['location'] = dest_filename
-        environment.bundle['size'] = file_obj.tell()
-        print "%s saving..."%file_obj.filename
-        environment.save()
-        return True
-    except:
-        print traceback.print_exc()
-        return False
-
 def delete_project_files(project):
-    s3_files = s3.Bucket('reproforge-pictures')
-    s3_bundles = s3.Bucket('reproforge-bundles')
-
     from corrdb.common.models import ProjectModel
     from corrdb.common.models import RecordModel
     from corrdb.common.models import EnvironmentModel
     from corrdb.common.models import FileModel
 
+    # print s3_files
+    # project resources
+    for _file in project.resources:
+        file_ = FileModel.objects.with_id(_file)
+        if file_:
+            # print file_.to_json()
+            result = s3_delete_file(file_.group, file_.storage)
+            if result:
+                logStat(deleted=True, file_obj=file_)
+                file_.delete()
+
+    # project records resources
     for record in project.records:
-        for _file in record.files:
-            s3_files.delete_key(_file.location)
+        result = delete_record_files(record)
+        if result:
+            logStat(deleted=True, record=record)
+            record.delete()
 
     for environment_id in project.history:
         _environment = EnvironmentModel.objects.with_id(environment_id)
         if _environment.bundle["scope"] == "local":
-            s3_bundles.delete_key(_environment.bundle["location"])
-        del _environment
+            s3_bundles.delete_key(_environment.bundle.location)
+            result = s3_delete_file('bundle', _environment.bundle.location)
+            if result:
+                logStat(deleted=True, bundle=_environment.bundle)
+                logStat(deleted=True, environment=_environment)
+                _environment.bundle.delete()
+                _environment.delete()
+        else:
+            logStat(deleted=True, environment=_environment)
+            _environment.delete()
 
 def delete_record_files(record):
-    s3_files = s3.Bucket('reproforge-pictures')
+    # s3_files = s3.Bucket('reproforge-files')
 
     from corrdb.common.models import RecordModel
     from corrdb.common.models import FileModel
+    final_result = True
+    for _file_id in record.resources:
+        _file = FileModel.objects.with_id(_file_id)
+        result = delete_record_file(_file)
+        if not result:
+            final_result = result
+    return final_result
 
-    for record in project.records:
-        for _file in record.files:
-            s3_files.delete_key(_file.location)
+def delete_record_file(record_file):
+    result = s3_delete_file(record_file.group, record_file.storage)
+    if result:
+        logStat(deleted=True, file_obj=record_file)
+        record_file.delete()
+    return result
 
 def api_response(code, title, content):
     import flask as fk
@@ -532,37 +502,18 @@ def api_response(code, title, content):
     # print response
     return fk.Response(json.dumps(response, sort_keys=True, indent=4, separators=(',', ': ')), mimetype='application/json')
 
-def s3_upload_file(file_meta=None, file_obj=None):
-    if file_meta != None and file_obj != None:
-        if file_meta.location == 'local':
-            dest_filename = file_meta.storage
-            try:
-                group = 'corr-resources'
-                if file_meta.group != 'descriptive':
-                    group = 'corr-%ss'%file_meta.group
-                # print group
-                s3_files = s3.Bucket(group)
-                s3_files.put_object(Key=dest_filename, Body=file_obj.read())
-                return [True, "File uploaded successfully"]
-            except:
-                return [False, traceback.format_exc()]
-        else:
-            return [False, "Cannot upload a file that is remotely set. It has to be local targeted."]
-    else:
-        return [False, "file meta data does not exist or file content is empty."]
-
 def s3_get_file(group='', key=''):
     file_buffer = StringIO()
     try:
         obj = None
         if key != '':
-            obj = s3.Object(bucket_name='corr-%ss'%group, key=key)
+            obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/{1}'.format(group,key))
         else:
             if group == 'picture' or group == 'logo':
-                obj = s3.Object(bucket_name='corr-%ss'%group, key='default-%s.png'%group)
+                obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/default-{1}.png'.format(group,key))
     except:
         if group == 'picture' or group == 'logo':
-            obj = s3.Object(bucket_name='corr-logos', key='default-%s.png'%group)
+            obj = s3.Object(bucket_name=S3_BUCKET, key='corr-logos/default-{0}.png'.format(group))
 
     try:
         res = obj.get()
@@ -572,13 +523,38 @@ def s3_get_file(group='', key=''):
     except:
         return None
 
+def s3_upload_file(file_meta=None, file_obj=None):
+    if file_meta != None and file_obj != None:
+        if file_meta.location == 'local':
+            dest_filename = file_meta.storage
+            try:
+                group = 'corr-resources'
+                if file_meta.group != 'descriptive':
+                    group = 'corr-%ss'%file_meta.group
+                print group
+                s3_files = s3.Bucket(S3_BUCKET)
+                s3_files.put_object(Key='{0}/{1}'.format(group, dest_filename), Body=file_obj.read())
+                return [True, "File uploaded successfully"]
+            except:
+                return [False, traceback.format_exc()]
+        else:
+            return [False, "Cannot upload a file that is remotely set. It has to be local targeted."]
+    else:
+        return [False, "file meta data does not exist or file content is empty."]
+
 def s3_delete_file(group='', key=''):
+    deleted = False
     if key not in ["default-logo.png", "default-picture.png"]:
-        s3_files = s3.Bucket('corr-%ss'%group)
+        s3_files = s3.Bucket(S3_BUCKET)
         for _file in s3_files.objects.all():
-            if _file.key == key: 
+            if _file.key == 'corr-{0}s/{1}'.format(group, key): 
                 _file.delete()
+                print "File deleted!"
+                deleted = True
                 break
+        if not deleted:
+            print "File not deleted"
+    return deleted
 
 def data_pop(data=None, element=''):
     if data != None:
@@ -609,6 +585,7 @@ def web_get_file(url):
 
 API_VERSION = 0.1
 API_URL = '/api/v{0}'.format(API_VERSION)
+
 
 def logTraffic(endpoint=''):
     # created_at=datetime.datetime.utcnow()

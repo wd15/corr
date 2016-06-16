@@ -26,6 +26,8 @@ app = setup_app(__name__)
 
 s3 =  boto3.resource('s3')
 
+S3_BUCKET = app.config['S3_BUCKET']
+
 # Stormpath
 
 from flask.ext.stormpath import StormpathManager
@@ -129,56 +131,9 @@ def crossdomain(origin=None, methods=None, headers=None,
         return update_wrapper(wrapped_function, f)
     return decorator
 
-# def load_bundle(record):
-#     # Include record files later.
-#     memory_file = BytesIO()
-#     with zipfile.ZipFile(memory_file, 'w') as zf:
-
-#         try:
-#             bundle_buffer = StringIO()
-#             # with open(record.container.image['location'], 'rb') as fh:
-#             #     image_buffer.write(fh.read())
-#             # res = key.get_contents_to_filename(record.container.image['location'])   
-#             # s3_client = boto3.client('s3')
-#             # res = s3_client.get_object(Bucket='ddsm-bucket', Key=record.container.image['location']) 
-#             obj = s3.Object(bucket_name='reproforge-bundles', key=record.environment.bundle['location'])  
-#             res = obj.get()      
-#             bundle_buffer.write(res['Body'].read())
-#             bundle_buffer.seek(0)
-
-#             data = zipfile.ZipInfo("%s"%(record.project.name, record.environment.bundle['location'].split('_')))
-#             data.date_time = time.localtime(time.time())[:6]
-#             data.compress_type = zipfile.ZIP_DEFLATED
-#             data.external_attr |= 0777 << 16L # -rwx-rwx-rwx
-#             zf.writestr(data, bundle_buffer.read())
-#         except:
-#             print traceback.print_exc()
-
-#         try:
-#             json_buffer = StringIO()
-#             json_buffer.write(record.to_json())
-#             json_buffer.seek(0)
-
-#             data = zipfile.ZipInfo("%s_%s.json"%(record.project.name, str(record.id)))
-#             data.date_time = time.localtime(time.time())[:6]
-#             data.compress_type = zipfile.ZIP_DEFLATED
-#             data.external_attr |= 0777 << 16L # -rwx-rwx-rwx
-#             zf.writestr(data, json_buffer.read())
-#         except:
-#             print traceback.print_exc()
-#     memory_file.seek(0)
-
-
-    # imz.append('record.tar', image_buffer.read()).append("record.json", json_buffer.read())
-
-    # print record.container.image['location'].split("/")[-1].split(".")[0]+".zip"
-
     return [memory_file, record.environment.bundle['location'].split("/")[-1].split(".")[0]+".zip"]
 
 def delete_project_files(project):
-    # s3_files = s3.Bucket('reproforge-pictures')
-    # s3_bundles = s3.Bucket('reproforge-bundles')
-
     from corrdb.common.models import ProjectModel
     from corrdb.common.models import RecordModel
     from corrdb.common.models import EnvironmentModel
@@ -244,16 +199,19 @@ def delete_record_file(record_file):
 
 def s3_get_file(group='', key=''):
     file_buffer = StringIO()
+    print 'corr-{0}s/{1}'.format(group,key)
     try:
         obj = None
         if key != '':
-            obj = s3.Object(bucket_name='corr-%ss'%group, key=key)
+            obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/{1}'.format(group,key))
         else:
             if group == 'picture' or group == 'logo':
-                obj = s3.Object(bucket_name='corr-%ss'%group, key='default-%s.png'%group)
+                obj = s3.Object(bucket_name=S3_BUCKET, key='corr-{0}s/default-{1}.png'.format(group,key))
     except:
+        print 'corr-{0}s/{1}'.format(group,key)
+        print traceback.print_exc()
         if group == 'picture' or group == 'logo':
-            obj = s3.Object(bucket_name='corr-logos', key='default-%s.png'%group)
+            obj = s3.Object(bucket_name=S3_BUCKET, key='corr-logos/default-{0}.png'.format(group))
 
     try:
         res = obj.get()
@@ -261,6 +219,8 @@ def s3_get_file(group='', key=''):
         file_buffer.seek(0)
         return file_buffer
     except:
+        print 'corr-{0}s/{1}'.format(group,key)
+        print traceback.print_exc()
         return None
 
 def s3_upload_file(file_meta=None, file_obj=None):
@@ -272,8 +232,8 @@ def s3_upload_file(file_meta=None, file_obj=None):
                 if file_meta.group != 'descriptive':
                     group = 'corr-%ss'%file_meta.group
                 print group
-                s3_files = s3.Bucket(group)
-                s3_files.put_object(Key=dest_filename, Body=file_obj.read())
+                s3_files = s3.Bucket(S3_BUCKET)
+                s3_files.put_object(Key='{0}/{1}'.format(group, dest_filename), Body=file_obj.read())
                 return [True, "File uploaded successfully"]
             except:
                 return [False, traceback.format_exc()]
@@ -285,9 +245,9 @@ def s3_upload_file(file_meta=None, file_obj=None):
 def s3_delete_file(group='', key=''):
     deleted = False
     if key not in ["default-logo.png", "default-picture.png"]:
-        s3_files = s3.Bucket('corr-%ss'%group)
+        s3_files = s3.Bucket(S3_BUCKET)
         for _file in s3_files.objects.all():
-            if _file.key == key: 
+            if _file.key == 'corr-{0}s/{1}'.format(group, key): 
                 _file.delete()
                 print "File deleted!"
                 deleted = True
@@ -295,70 +255,6 @@ def s3_delete_file(group='', key=''):
         if not deleted:
             print "File not deleted"
     return deleted
-
-
-
-# def load_file(file_model):
-
-#     file_buffer = StringIO()
-#     obj = s3.Object(bucket_name='reproforge-files', key=file_model.location)  
-#     res = obj.get()      
-#     file_buffer.write(res['Body'].read())
-#     file_buffer.seek(0)
-
-#     return [file_buffer, file_model.location.split('_')[1]]
-
-# def load_picture(profile):
-
-#     picture_buffer = StringIO()
-#     obj = s3.Object(bucket_name='reproforge-pictures', key=profile.picture['location'])
-#     res = obj.get()      
-#     picture_buffer.write(res['Body'].read())
-#     picture_buffer.seek(0)
-
-#     return [picture_buffer, digest]
-
-# def upload_bundle(current_user, environment, file_obj):
-#     dest_filename = str(current_user.id)+"-"+str(environment.id)+"_%s"%file_obj.filename #kind is record| signature
-
-#     print "About to write..."
-#     try:
-#         s3.Bucket('reproforge-bundles').put_object(Key=str(current_user.id)+"-"+str(environment.id)+"_%s"%file_obj.filename, Body=file_obj.read())
-#         environment.bundle['location'] = dest_filename
-#         environment.bundle['size'] = file_obj.tell()
-#         print "%s saving..."%file_obj.filename
-#         environment.save()
-#         return True
-#     except:
-#         return False
-#         print traceback.print_exc()
-
-# def upload_file(current_user, file_model, file_obj):
-#     dest_filename = str(current_user.id)+"-"+str(file_model.record.id)+"_%s"%file_obj.filename #kind is record| signature
-
-#     print "About to write..."
-#     try:
-#         s3.Bucket('reproforge-files').put_object(Key=str(current_user.id)+"-"+str(record.id)+"_%s"%file_obj.filename, Body=file_obj.read())
-#         file_model.location = dest_filename
-#         file_model.size = file_obj.tell()
-#         print "%s saving..."%file_obj.filename
-#         file_model.save()
-#         return True
-#     except:
-#         return False
-#         print traceback.print_exc()
-
-# def upload_picture(current_user, file_obj):
-#     dest_filename = str(current_user.id) #kind is record| signature
-
-#     print "About to write..."
-#     try:
-#         s3.Bucket('reproforge-pictures').put_object(Key=str(current_user.id)+"."+file_obj.filename.split('.')[-1], Body=file_obj.read())
-#         print "%s saving..."%file_obj.filename
-#         return True
-#     except:
-#         return False
-#         print traceback.print_exc()
 
 def logTraffic(endpoint=''):
     # created_at=datetime.datetime.utcnow()
@@ -661,6 +557,7 @@ VIEW_PORT = app.config['VIEW_SETTINGS']['port']
 
 API_HOST = app.config['VIEW_SETTINGS']['host']
 API_PORT = app.config['VIEW_SETTINGS']['port']
+
 
 from . import views
 from corrdb.common import models

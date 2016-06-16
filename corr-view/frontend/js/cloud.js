@@ -131,7 +131,8 @@ var user = {
                         user.upload_file(file, 'picture', 'none');
                     }else{
                         console.log("No picture to change");
-                        window.location.replace("../?session="+user.session);
+                        // window.location.replace("../?session="+user.session);
+                        window.location.reload(); 
                     }
                     Materialize.toast('<span>Update succeeded</span>', 3000);
                 } else {
