@@ -223,12 +223,13 @@ def s3_get_file(group='', key=''):
         position = 3000*block_max
         if left > 0:
             file_buffer.write(res['Body'].read(left))
-            file_buffer.seek(position)
-        for index in range(block_max):
-            position = position - 3000
-            file_buffer.seek(position)
-        if position > 0:
-            file_buffer.seek(0)
+            # file_buffer.seek(position)
+        # for index in range(block_max):
+        #     position = position - 3000
+        #     file_buffer.seek(position)
+        # if position > 0:
+        #     file_buffer.seek(0)
+        file_buffer.seek(0)
         return file_buffer
     except:
         print 'corr-{0}s/{1}'.format(group,key)
