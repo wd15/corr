@@ -218,11 +218,8 @@ def s3_get_file(group='', key=''):
         size = res['ContentLength']
         left = size % 3000
         block_max = size / 3000
-        for index in range(block_max):
-            file_buffer.write(res['Body'].read(3000))
-        if left > 0:
-            file_buffer.write(res['Body'].read(left))
-        # file_buffer.seek(0)
+        file_buffer.write(res['Body'].read())
+        file_buffer.seek(0)
         return file_buffer
     except:
         print 'corr-{0}s/{1}'.format(group,key)
