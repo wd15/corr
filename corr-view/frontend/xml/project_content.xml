@@ -14,21 +14,21 @@
             <p><i class='mdi-device-access-alarm cyan-text text-darken-2'></i>project_duration</p>
             <div class='row margin'>
                 <div class='input-field col s12'><i class='mdi-action-turned-in prefix cyan-text text-darken-2'></i>
-                    <input readonly="true" id='project-tags-project_id' type='text' value='project_tags'>
+                    <input readonly="true" id='project-tags-project_id' type='text' value='project_tags'></input>
                 </div>
             </div>
             <div class='row margin'>
                 <div class='input-field col s12'><i class='mdi-action-description prefix cyan-text text-darken-2'></i>
-                    <input readonly="true" id='project-desc-project_id' type='text' value='project_description'>
+                    <input readonly="true" id='project-desc-project_id' type='text' value='project_description'></input>
                 </div>
             </div>
             <div class='row margin'>
                 <div class='input-field col s12'><i class='mdi-action-subject prefix cyan-text text-darken-2'></i>
-                    <input readonly="true" id='project-goals-project_id' type='text' value='project_goals'>
+                    <input readonly="true" id='project-goals-project_id' type='text' value='project_goals'></input>
                 </div>
             </div>
             <div class='card-action center-align'>
-                <a href='./?session=session&view=records&project=project_id' class='valign left'><i class='mdi-file-cloud-done cyan-text text-darken-2'></i> <span class='records badge'>project_records</span></a>
+                <a href='./?session=session&amp;view=records&amp;project=project_id' class='valign left'><i class='mdi-file-cloud-done cyan-text text-darken-2'></i> <span class='records badge'>project_records</span></a>
                 <a onclick='Materialize.toast(\"&lt;span&gt;Project diffs view not implemented yet!&lt;/span&gt;\", 3000);' class='valign'><i class='mdi-image-compare cyan-text text-darken-2'></i> <span class='diffs badge'>project_diffs</span></a>
                 <a onclick='Materialize.toast(\"&lt;span&gt; Project environments view not implemented yet!&lt;/span&gt;\", 3000);' class='valign right'><i class='mdi-editor-insert-chart cyan-text text-darken-2'></i> <span class='containers badge'>project_envs</span></a>
             </div>
