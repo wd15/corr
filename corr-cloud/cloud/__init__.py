@@ -218,11 +218,12 @@ def s3_get_file(group='', key=''):
         size = res['ContentLength']
         left = size % 3000
         block_max = size / 3000
-        for index in range(block_max):
-            file_buffer.write(res['Body'].read(3000))
-        position = 3000*block_max
-        if left > 0:
-            file_buffer.write(res['Body'].read(left))
+        file_buffer.write(res['Body'].read())
+        # for index in range(block_max):
+        #     file_buffer.write(res['Body'].read(3000))
+        # position = 3000*block_max
+        # if left > 0:
+        #     file_buffer.write(res['Body'].read(left))
             # file_buffer.seek(position)
         # for index in range(block_max):
         #     position = position - 3000
