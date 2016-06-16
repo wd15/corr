@@ -25,7 +25,7 @@ var dashboard = {
         };
         function failed(){
             console.log(window.location.host);
-            // window.location.replace("/error-404/");
+            window.location.replace("/error-404/");
         };
         config.load_xml('dashboard_activity.xml', [], succeed, failed);
 	},

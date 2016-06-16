@@ -14,17 +14,17 @@
             <p><i class='mdi-device-access-alarm cyan-text text-darken-2'></i>project_duration</p>
             <div class='row margin'>
                 <div class='input-field col s12'><i class='mdi-action-turned-in prefix cyan-text text-darken-2'></i>
-                    <input readonly id='project-tags-project_id' type='text' value='project_tags'>
+                    <input readonly="true" id='project-tags-project_id' type='text' value='project_tags'>
                 </div>
             </div>
             <div class='row margin'>
                 <div class='input-field col s12'><i class='mdi-action-description prefix cyan-text text-darken-2'></i>
-                    <input readonly id='project-desc-project_id' type='text' value='project_description'>
+                    <input readonly="true" id='project-desc-project_id' type='text' value='project_description'>
                 </div>
             </div>
             <div class='row margin'>
                 <div class='input-field col s12'><i class='mdi-action-subject prefix cyan-text text-darken-2'></i>
-                    <input readonly id='project-goals-project_id' type='text' value='project_goals'>
+                    <input readonly="true" id='project-goals-project_id' type='text' value='project_goals'>
                 </div>
             </div>
             <div class='card-action center-align'>
